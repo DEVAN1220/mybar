@@ -1,16 +1,10 @@
 #include "raylib.h"
+#include<stddef.h>
 
-// Forward-declare the GLFW native functions
-#ifdef __cplusplus
-extern "C" {
-#endif
-    void* glfwGetX11Display(void);
-    unsigned long glfwGetX11Window(void* window);
-#ifdef __cplusplus
-}
-#endif
 
-// Minimal X11 types and definitions to avoid header collisions
+void* glfwGetX11Display(void);
+unsigned long glfwGetX11Window(void* window);
+
 typedef unsigned long XID;
 typedef XID Window;
 typedef XID Atom;
@@ -28,22 +22,20 @@ int XChangeProperty(Display* display, Window w, Atom property, Atom type,
 
 
 void make_window_dock(void){
+  void* rawWindow = GetWindowHandle();
+  Display* display = XOpenDisplay(NULL);
+  Window window = (Window)glfwGetX11Window(rawWindow);
 
-void* rawWindow = GetWindowHandle();
-    Display* display = glfwGetX11Display();
-    Window window = (Window)glfwGetX11Window(rawWindow);
+  if (display && window) {
+	Atom wmType = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
+	Atom typeDock = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DOCK", False);
 
-    if (display && window) {
-        Atom wmType = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
-        Atom typeDock = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DOCK", False);
-
-        // Tell the window manager this is a fixed desktop panel/dock
-        XChangeProperty(
-            display, window,
-            wmType, XA_ATOM, 32,
-            PropModeReplace,
-            (unsigned char*)&typeDock, 1
-        );
-    }
+	XChangeProperty(
+		display, window,
+		wmType, XA_ATOM, 32,
+		PropModeReplace,
+		(unsigned char*)&typeDock, 1
+		);
+  }
 
 }
